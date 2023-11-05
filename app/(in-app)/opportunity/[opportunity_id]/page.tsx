@@ -1,15 +1,72 @@
-/**
- * v0 by Vercel.
- * @see https://v0.dev/t/uj7jFI93L4G
- */
+"use client"
+
+import { useState } from 'react';
 import { Button } from "@/components/ui/button"
 
 export default function Component() {
+  const [isRecording, setRecording] = useState(false);
+  const [permission, setPermission] = useState(false);
+  const [stream, setStream] = useState<MediaStream>();
+
+
+  async function getMediaPermissions() {
+    if ("MediaRecorder" in window) {
+      try {
+        const streamData = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: false,
+        });
+        setPermission(true);
+        setStream(streamData);
+      } catch (err) {
+        alert("err.message");
+      }
+    } else {
+      alert("The MediaRecorder API is not supported in your browser.");
+    }
+  }
+
+  async function startRecording() {
+    getMediaPermissions();
+    setRecording(true);
+  }
+
+  async function stopRecording() {
+    setRecording(false);
+  }
+
   return (
     <div className="w-full p-6 relative">
-      <Button aria-label="Start recording" className="absolute top-4 right-4 bg-gray-800 text-white rounded-md">
-        Start recording
-      </Button>
+      {isRecording ? (
+        <div>
+          <Button onClick={() => stopRecording()} aria-label="Stop recording" className="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-white rounded-md">
+            <svg
+              className=" mr-2 h-4 w-4"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect height="6" width="6" x="9" y="7" />
+              <rect height="14" rx="2" width="20" x="2" y="3" />
+              <path d="M12 17v4" />
+              <path d="M8 21h8" />
+            </svg>
+            Stop recording
+          </Button>
+        </div>
+      ) : (
+        <div>
+          <Button onClick={() => startRecording()} aria-label="Start recording" className="absolute top-4 right-4 bg-gray-800 text-white rounded-md">
+            Start recording
+          </Button>
+        </div>
+      )}
       <section className="mb-8">
         <h1 className="text-3xl font-bold mb-4">Opportunity Name</h1>
       </section>
