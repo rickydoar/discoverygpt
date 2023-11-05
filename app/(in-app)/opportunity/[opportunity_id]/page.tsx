@@ -3,10 +3,28 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button"
 
+interface SpeechRecognition {
+  new (): SpeechRecognition;
+  continuous: boolean;
+  onresult: (event: any) => void;
+  onerror: (event: any) => void;
+  onend: () => void;
+  start: () => void;
+  stop: () => void;
+}
+
+declare global {
+  interface Window {
+    webkitSpeechRecognition: SpeechRecognition;
+  }
+}
+
 export default function Component() {
   const [isRecording, setRecording] = useState(false);
   const [permission, setPermission] = useState(false);
   const [stream, setStream] = useState<MediaStream>();
+  const [recognition, setRecognition] = useState<SpeechRecognition>();
+  const [transcript, setTranscript] = useState<string>('');
 
 
   async function getMediaPermissions() {
@@ -28,11 +46,39 @@ export default function Component() {
 
   async function startRecording() {
     getMediaPermissions();
-    setRecording(true);
+    if (permission) {
+      setRecording(true);
+      const recognition = new window.webkitSpeechRecognition;
+
+      recognition.continuous = true;
+
+      let conversation = '';
+
+      recognition.onresult = (event: any) => {
+        const result = event.results[event.results.length - 1];
+        conversation = conversation + result[0].transcript;
+        setTranscript(conversation);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+      };
+
+      recognition.onend = () => {
+        console.log('Speech recognition ended.');
+      };
+
+      recognition.start();
+      setRecognition(recognition);
+    }
   }
 
   async function stopRecording() {
+    if (recognition) {
+      recognition.stop();
+    }
     setRecording(false);
+    console.log(transcript);
   }
 
   return (
@@ -69,6 +115,16 @@ export default function Component() {
       )}
       <section className="mb-8">
         <h1 className="text-3xl font-bold mb-4">Opportunity Name</h1>
+      </section>
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold mb-4">Calls</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 border rounded-md">
+            <h3 className="font-semibold text-lg">Call Name</h3>
+            <p className="text-gray-600 dark:text-gray-300">{transcript}</p>
+            <p className="text-gray-500 dark:text-gray-400">Call Notes</p>
+          </div>
+        </div>
       </section>
       <section className="mb-8">
         <h2 className="text-2xl font-bold mb-4">People Involved</h2>
